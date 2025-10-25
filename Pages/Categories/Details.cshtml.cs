@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using lorena_bodnarescu_lab2.ultimul.Data;
 using lorena_bodnarescu_lab2.ultimul.Models;
 
-namespace lorena_bodnarescu_lab2.ultimul.Pages.Books
+namespace lorena_bodnarescu_lab2.ultimul.Pages.Categories
 {
     public class DetailsModel : PageModel
     {
@@ -19,7 +19,7 @@ namespace lorena_bodnarescu_lab2.ultimul.Pages.Books
             _context = context;
         }
 
-        public Book Book { get; set; } = default!;
+        public Category Category { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -28,19 +28,15 @@ namespace lorena_bodnarescu_lab2.ultimul.Pages.Books
                 return NotFound();
             }
 
-            Book = await _context.Book
-                .Include(b => b.Publisher)
-                .Include(b => b.Author)
-                .Include(b => b.BookCategories)
-                    .ThenInclude(bc => bc.Category)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.ID == id);
-
-            if (Book == null)
+            var category = await _context.Category.FirstOrDefaultAsync(m => m.ID == id);
+            if (category == null)
             {
                 return NotFound();
             }
-
+            else
+            {
+                Category = category;
+            }
             return Page();
         }
     }

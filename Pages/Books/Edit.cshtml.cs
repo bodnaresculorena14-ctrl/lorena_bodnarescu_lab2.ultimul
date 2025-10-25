@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using lorena_bodnarescu_lab2.ultimul.Data;
@@ -11,7 +8,7 @@ using lorena_bodnarescu_lab2.ultimul.Models;
 
 namespace lorena_bodnarescu_lab2.ultimul.Pages.Books
 {
-    public class EditModel : PageModel
+    public class EditModel : BookCategoriesPageModel
     {
         private readonly lorena_bodnarescu_lab2.ultimul.Data.lorena_bodnarescu_lab2ultimulContext _context;
 
@@ -30,54 +27,81 @@ namespace lorena_bodnarescu_lab2.ultimul.Pages.Books
                 return NotFound();
             }
 
-            var book =  await _context.Book.FirstOrDefaultAsync(m => m.ID == id);
-            if (book == null)
+            // Se include Author conform cerinței din laborator
+            Book = await _context.Book
+                .Include(b => b.Publisher)
+                .Include(b => b.BookCategories).ThenInclude(b => b.Category)
+                .Include(b => b.Author)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.ID == id);
+
+            if (Book == null)
             {
                 return NotFound();
             }
-            Book = book;
-            ViewData["PublisherID"] = new SelectList(
-    _context.Set<lorena_bodnarescu_lab2.ultimul.Models.Publisher>(),
-    "ID",
-    "PublisherName"
-);
+
+            // PopulateAssignedCategoryData pentru checkbox-urile de categorii
+            PopulateAssignedCategoryData(_context, Book);
+
+
+            var authorList = _context.Author.Select(x => new
+            {
+                x.ID,
+                FullName = x.LastName + " " + x.FirstName
+            });
+
+            ViewData["AuthorID"] = new SelectList(authorList, "ID", "FullName");
+            ViewData["PublisherID"] = new SelectList(_context.Publisher, "ID", "PublisherName");
 
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(int id, string[] selectedCategories)
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            var bookToUpdate = await _context.Book
+                .Include(b => b.BookCategories)
+                .FirstOrDefaultAsync(b => b.ID == id);
 
-            _context.Attach(Book).State = EntityState.Modified;
+            if (bookToUpdate == null) return NotFound();
 
-            try
+            // Actualizează titlu, preț, etc.
+            if (await TryUpdateModelAsync<Book>(
+                bookToUpdate,
+                "Book",
+                b => b.Title, b => b.Price, b => b.PublishingDate, b => b.PublisherID, b => b.AuthorID))
             {
+                // Șterge vechile categorii
+                bookToUpdate.BookCategories.Clear();
+
+                // Adaugă categoriile selectate
+                if (selectedCategories != null)
+                {
+                    foreach (var catId in selectedCategories)
+                    {
+                        bookToUpdate.BookCategories.Add(new BookCategory
+                        {
+                            BookID = bookToUpdate.ID,
+                            CategoryID = int.Parse(catId)
+                        });
+                    }
+                }
+
                 await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
             }
-            catch (DbUpdateConcurrencyException)
+
+            // Dacă apare eroare, re-populează lista pentru view
+            var allCategories = await _context.Category.ToListAsync();
+            AssignedCategoryDataList = allCategories.Select(c => new AssignedCategoryData
             {
-                if (!BookExists(Book.ID))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+                CategoryID = c.ID,
+                CategoryName = c.CategoryName,
+                Assigned = selectedCategories != null && selectedCategories.Contains(c.ID.ToString())
+            }).ToList();
 
-            return RedirectToPage("./Index");
+            return Page();
         }
 
-        private bool BookExists(int id)
-        {
-            return _context.Book.Any(e => e.ID == id);
-        }
+
     }
 }
