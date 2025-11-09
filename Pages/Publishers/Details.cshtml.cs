@@ -12,9 +12,9 @@ namespace lorena_bodnarescu_lab2.ultimul.Pages.Publisher
 {
     public class DetailsModel : PageModel
     {
-        private readonly lorena_bodnarescu_lab2.ultimul.Data.lorena_bodnarescu_lab2ultimulContext _context;
+        private readonly lorena_bodnarescu_lab2.ultimul.Data.lorena_bodnarescu_lab2Context _context;
 
-        public DetailsModel(lorena_bodnarescu_lab2.ultimul.Data.lorena_bodnarescu_lab2ultimulContext context)
+        public DetailsModel(lorena_bodnarescu_lab2.ultimul.Data.lorena_bodnarescu_lab2Context context)
         {
             _context = context;
         }
