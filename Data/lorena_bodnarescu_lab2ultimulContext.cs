@@ -7,15 +7,30 @@ using lorena_bodnarescu_lab2.ultimul.Models;
 
 namespace lorena_bodnarescu_lab2.ultimul.Data
 {
-    public class lorena_bodnarescu_lab2ultimulContext : DbContext
+    public class lorena_bodnarescu_lab2Context : DbContext
     {
-        public lorena_bodnarescu_lab2ultimulContext (DbContextOptions<lorena_bodnarescu_lab2ultimulContext> options)
+        public lorena_bodnarescu_lab2Context(DbContextOptions<lorena_bodnarescu_lab2Context> options)
             : base(options)
         {
         }
 
-        public DbSet<lorena_bodnarescu_lab2.ultimul.Models.Book> Book { get; set; } = default!;
-        public DbSet<lorena_bodnarescu_lab2.ultimul.Models.Publisher> Publisher { get; set; } = default!;
-        public DbSet<lorena_bodnarescu_lab2.ultimul.Models.Author> Author { get; set; } = default!;
+        public DbSet<Book> Book { get; set; } = default!;
+        public DbSet<Author> Author { get; set; } = default!;
+        public DbSet<Publisher> Publisher { get; set; } = default!;
+        public DbSet<Category> Category { get; set; } = default!;
+        public DbSet<BookCategory> BookCategory { get; set; } = default!;
+        public DbSet<Member> Member { get; set; } = default!; // dacă ai creat clasa Member
+        public DbSet<Borrowing> Borrowing { get; set; } = default!; // dacă ai creat clasa Borrowing
+
+        // 🔹 Adaugă această metodă
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // ✅ Definim cheia primară compusă pentru BookCategory
+            modelBuilder.Entity<BookCategory>()
+                .HasKey(bc => new { bc.BookID, bc.CategoryID });
+        }
     }
 }
+

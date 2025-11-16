@@ -8,13 +8,20 @@ namespace lorena_bodnarescu_lab2.ultimul.Models
     {
         public int ID { get; set; }
 
-        [Display(Name = "First Name")]
         public string FirstName { get; set; }
-
-        [Display(Name = "Last Name")]
         public string LastName { get; set; }
 
-        public required ICollection<lorena_bodnarescu_lab2.ultimul.Models.Book> Books { get; set; }
+        [Display(Name = "Full Name")]
+        public string FullName
+        {
+            get
+            {
+                return FirstName + " " + LastName;
+            }
+        }
+
+        public ICollection<Book>? Books { get; set; }
+
 
     }
 }
